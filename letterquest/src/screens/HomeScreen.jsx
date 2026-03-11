@@ -41,14 +41,14 @@ export default function HomeScreen() {
         animate={{ y: [0, -5, 0] }}
         transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
       >
-        <PixelIcon name="flower" size={48} />
+        <PixelIcon name="playerSoldier" size={48} />
       </motion.div>
       <motion.div
         className="absolute bottom-8 right-12 select-none"
         animate={{ y: [0, -5, 0] }}
         transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
       >
-        <PixelIcon name="cherryBlossom" size={56} />
+        <PixelIcon name="enemyCastle" size={56} />
       </motion.div>
 
       {/* Title */}
@@ -66,14 +66,14 @@ export default function HomeScreen() {
           LetterQuest
         </motion.h1>
         <p className="font-fredoka text-2xl text-white/80 drop-shadow mb-2">
-          A Typing Adventure!
+          A Typing Defense!
         </p>
         <motion.div
           className="flex justify-center mb-8"
           animate={{ rotate: [0, 10, -10, 0] }}
           transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
         >
-          <PixelIcon name="owl" size={64} />
+          <PixelIcon name="playerCastle" size={72} />
         </motion.div>
       </motion.div>
 
@@ -87,7 +87,7 @@ export default function HomeScreen() {
         <Button
           variant="primary"
           size="xl"
-          icon={<PixelIcon name="controller" size={28} />}
+          icon={<PixelIcon name="fireball" size={28} />}
           onClick={() => navigate('/worlds')}
         >
           PLAY

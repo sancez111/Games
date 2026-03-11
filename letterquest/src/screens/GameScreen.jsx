@@ -1,31 +1,26 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
-import { WORLDS, LETTERS_PER_LEVEL, checkAnswer, generateLevelLetters } from '../data/worlds';
+import { WORLDS, checkAnswer, generateLevelLetters, getLevelConfig, LETTERS_PER_LEVEL, PASS_THRESHOLD } from '../data/worlds';
 import { useGame } from '../context/GameContext';
-import { useKeyboard } from '../hooks/useKeyboard';
 import { useTimer } from '../hooks/useTimer';
 import TimerRing from '../components/TimerRing';
-import Mascot from '../components/Mascot';
 import Confetti from '../components/Confetti';
 import StreakBanner from '../components/StreakBanner';
 import WorldBackground from '../components/WorldBackground';
+import BattleField from '../components/BattleField';
 import Button from '../components/Button';
 import PixelIcon from '../components/PixelIcons';
 import { soundManager } from '../utils/soundManager';
 
-// Power-up definitions
-const POWERUPS = {
-  slowTime: { name: 'Slow Time', icon: 'hourglass', color: '#42A5F5', desc: 'More time!' },
-  owlHint: { name: 'Owl Hint', icon: 'hintBubble', color: '#66BB6A', desc: 'Shows the key!' },
-  shield: { name: 'Shield', icon: 'shield', color: '#AB47BC', desc: 'Blocks a miss!' },
-};
+let unitIdCounter = 0;
 
 export default function GameScreen() {
   const { worldId, levelIndex } = useParams();
   const wId = parseInt(worldId);
   const lIdx = parseInt(levelIndex);
   const world = WORLDS[wId - 1];
+  const levelConfig = getLevelConfig(wId, lIdx);
   const navigate = useNavigate();
   const { dispatch } = useGame();
 
@@ -36,33 +31,41 @@ export default function GameScreen() {
   const [correct, setCorrect] = useState(0);
   const [streak, setStreak] = useState(0);
   const [feedback, setFeedback] = useState(null);
-  const [mascotMood, setMascotMood] = useState('idle');
   const [showConfetti, setShowConfetti] = useState(false);
   const [gameActive, setGameActive] = useState(false);
   const [showCountdown, setShowCountdown] = useState(true);
-  const feedbackTimeout = useRef(null);
+  const [gameResult, setGameResult] = useState(null); // 'win' | 'lose' | null
 
-  // Use refs to track correct/score for the stale closure fix
+  // Refs for accurate values in callbacks
   const correctRef = useRef(0);
   const scoreRef = useRef(0);
 
-  // Power-up state: each starts with 1 charge
-  const [powerups, setPowerups] = useState({
-    slowTime: 1,
-    owlHint: 1,
-    shield: 1,
-  });
-  const [activeShield, setActiveShield] = useState(false);
-  const [showHint, setShowHint] = useState(false);
+  // Tower defense state
+  const [playerHP, setPlayerHP] = useState(levelConfig?.playerHP || 5);
+  const [enemyHP, setEnemyHP] = useState(levelConfig?.enemyHP || 3);
+  const [units, setUnits] = useState([]);
+
+  // Power-up state
+  const [shieldActive, setShieldActive] = useState(false);
   const [slowActive, setSlowActive] = useState(false);
+  const [fireballActive, setFireballActive] = useState(false);
+  const [shieldCharges, setShieldCharges] = useState(1);
+  const [slowCharges, setSlowCharges] = useState(levelConfig?.powerups.includes('slowTime') ? 1 : 0);
+  const [fireballCharges, setFireballCharges] = useState(levelConfig?.powerups.includes('fireball') ? 1 : 0);
+  const [selectedPowerup, setSelectedPowerup] = useState(null);
   const [powerupFlash, setPowerupFlash] = useState(null);
+
+  // Track which powerups are available
+  const availablePowerups = levelConfig?.powerups || ['shield'];
 
   // Initialize level
   useEffect(() => {
+    if (!levelConfig) return;
     const levelLetters = generateLevelLetters(wId, lIdx);
     setLetters(levelLetters);
     correctRef.current = 0;
     scoreRef.current = 0;
+    unitIdCounter = 0;
 
     const timer = setTimeout(() => {
       setShowCountdown(false);
@@ -74,63 +77,137 @@ export default function GameScreen() {
 
   const currentLetter = letters[currentIndex];
 
-  // Move to next letter or finish
-  const advanceToNext = useCallback(() => {
-    if (currentIndex + 1 >= LETTERS_PER_LEVEL) {
-      setGameActive(false);
-      // Use refs for accurate values
-      const finalCorrect = correctRef.current;
-      const finalScore = scoreRef.current;
+  // Spawn a unit marching across the field
+  const spawnUnit = useCallback((side) => {
+    const id = ++unitIdCounter;
+    const startPos = side === 'player' ? 10 : 90;
+    const endPos = side === 'player' ? 85 : 15;
 
+    setUnits((prev) => [...prev, { id, side, position: startPos, lane: Math.floor(Math.random() * 2) }]);
+
+    // Animate march and then remove
+    setTimeout(() => {
+      setUnits((prev) => prev.map((u) => u.id === id ? { ...u, position: endPos } : u));
+    }, 50);
+
+    setTimeout(() => {
+      setUnits((prev) => prev.filter((u) => u.id !== id));
+    }, 1200);
+  }, []);
+
+  // Check win/lose conditions
+  const checkGameEnd = useCallback((newPlayerHP, newEnemyHP, newIndex) => {
+    if (newEnemyHP <= 0) {
+      setGameActive(false);
+      setGameResult('win');
+      soundManager.playLevelComplete();
       setTimeout(() => {
         navigate(`/complete/${wId}/${lIdx}`, {
           state: {
-            correct: finalCorrect,
-            score: finalScore,
-            total: LETTERS_PER_LEVEL,
+            correct: correctRef.current,
+            score: scoreRef.current,
+            total: letters.length || levelConfig?.waveSize || 5,
+            won: true,
           },
         });
-      }, 800);
+      }, 1500);
+      return true;
+    }
+    if (newPlayerHP <= 0) {
+      setGameActive(false);
+      setGameResult('lose');
+      soundManager.playWrong();
+      setTimeout(() => {
+        navigate(`/complete/${wId}/${lIdx}`, {
+          state: {
+            correct: correctRef.current,
+            score: scoreRef.current,
+            total: letters.length || levelConfig?.waveSize || 5,
+            won: false,
+          },
+        });
+      }, 1500);
+      return true;
+    }
+    return false;
+  }, [wId, lIdx, navigate, letters.length, levelConfig]);
+
+  // Advance to next letter or finish
+  const advanceToNext = useCallback(() => {
+    if (currentIndex + 1 >= letters.length) {
+      // All letters done — check if enemy castle is destroyed
+      if (enemyHP > 0) {
+        // Player didn't destroy enemy — win if enemy HP < 50%
+        const enemyMaxHP = levelConfig?.enemyHP || 3;
+        if (enemyHP <= enemyMaxHP / 2) {
+          setGameActive(false);
+          setGameResult('win');
+          soundManager.playLevelComplete();
+          setTimeout(() => {
+            navigate(`/complete/${wId}/${lIdx}`, {
+              state: {
+                correct: correctRef.current,
+                score: scoreRef.current,
+                total: letters.length,
+                won: true,
+              },
+            });
+          }, 1500);
+        } else {
+          setGameActive(false);
+          setGameResult('lose');
+          setTimeout(() => {
+            navigate(`/complete/${wId}/${lIdx}`, {
+              state: {
+                correct: correctRef.current,
+                score: scoreRef.current,
+                total: letters.length,
+                won: false,
+              },
+            });
+          }, 1500);
+        }
+      }
     } else {
       setTimeout(() => {
         setCurrentIndex((prev) => prev + 1);
         setFeedback(null);
-        setMascotMood('idle');
-        setShowHint(false);
         setSlowActive(false);
         timerControls.start();
-      }, 1200);
+      }, 800);
     }
-  }, [currentIndex, wId, lIdx, navigate]);
+  }, [currentIndex, letters.length, enemyHP, wId, lIdx, navigate, levelConfig]);
 
   // Handle timer expire
   const handleTimerExpire = useCallback(() => {
     if (!gameActive) return;
 
-    // Shield absorbs the miss
-    if (activeShield) {
-      setActiveShield(false);
-      setFeedback('correct');
-      setMascotMood('happy');
+    // Shield blocks the damage
+    if (shieldActive) {
+      setShieldActive(false);
       setPowerupFlash('shield');
       setTimeout(() => setPowerupFlash(null), 600);
-      soundManager.playCorrect();
-      correctRef.current += 1;
-      setCorrect(correctRef.current);
-      scoreRef.current += 10;
-      setScore(scoreRef.current);
+      soundManager.playClick();
       advanceToNext();
       return;
     }
 
+    // Enemy attacks!
     setFeedback('expired');
-    setMascotMood('encourage');
-    setStreak(0);
+    spawnUnit('enemy');
     soundManager.playWrong();
-    advanceToNext();
-  }, [gameActive, activeShield, advanceToNext]);
 
-  const timerDuration = slowActive ? (world?.timer || 10) * 2 : (world?.timer || 10);
+    setPlayerHP((prev) => {
+      const newHP = Math.max(0, prev - (levelConfig?.enemyAttack || 1));
+      checkGameEnd(newHP, enemyHP, currentIndex);
+      return newHP;
+    });
+
+    setStreak(0);
+    advanceToNext();
+  }, [gameActive, shieldActive, advanceToNext, spawnUnit, levelConfig, enemyHP, currentIndex, checkGameEnd]);
+
+  const timerDuration = slowActive ? (levelConfig?.timer || 10) * 2 : (levelConfig?.timer || 10);
   const timerControls = useTimer(timerDuration, handleTimerExpire, gameActive);
 
   // Start timer when game becomes active
@@ -140,18 +217,30 @@ export default function GameScreen() {
     }
   }, [gameActive]);
 
-  // Handle key press
-  const handleKeyPress = useCallback(
-    (key) => {
-      if (!gameActive || feedback) return;
+  // Handle key press (letters + spacebar)
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (!gameActive || gameResult) return;
 
+      // SPACEBAR = activate selected power-up
+      if (e.key === ' ') {
+        e.preventDefault();
+        activatePowerup();
+        return;
+      }
+
+      // Only accept letter keys
+      if (!/^[a-zA-Z]$/.test(e.key)) return;
+      if (feedback) return;
+
+      e.preventDefault();
       timerControls.reset();
 
-      if (checkAnswer(key, currentLetter, wId)) {
+      if (checkAnswer(e.key, currentLetter, wId)) {
+        // Correct — attack enemy castle!
         const newStreak = streak + 1;
-        const points = 10;
+        const points = 10 + (newStreak >= 3 ? 5 : 0);
 
-        // Update refs immediately
         correctRef.current += 1;
         scoreRef.current += points;
 
@@ -159,22 +248,20 @@ export default function GameScreen() {
         setCorrect(correctRef.current);
         setScore(scoreRef.current);
         setStreak(newStreak);
-        setMascotMood('happy');
         setShowConfetti(true);
+        spawnUnit('player');
         soundManager.playCorrect();
 
-        // Award power-up charge every 2 correct in a streak
-        if (newStreak > 0 && newStreak % 2 === 0) {
-          setPowerups((prev) => {
-            const keys = Object.keys(prev);
-            // Find first power-up below max (3)
-            for (const k of keys) {
-              if (prev[k] < 3) {
-                return { ...prev, [k]: prev[k] + 1 };
-              }
-            }
-            return prev;
-          });
+        // Player attacks enemy castle
+        setEnemyHP((prev) => {
+          const newHP = Math.max(0, prev - (levelConfig?.playerAttack || 1));
+          checkGameEnd(playerHP, newHP, currentIndex);
+          return newHP;
+        });
+
+        // Recharge power-ups on streaks
+        if (newStreak % 3 === 0) {
+          rechargeRandomPowerup();
         }
 
         if (newStreak === 3 || newStreak === 5 || newStreak === 10) {
@@ -184,9 +271,9 @@ export default function GameScreen() {
         setTimeout(() => setShowConfetti(false), 500);
         advanceToNext();
       } else {
-        // Shield absorbs wrong answer
-        if (activeShield) {
-          setActiveShield(false);
+        // Wrong — shield check
+        if (shieldActive) {
+          setShieldActive(false);
           setPowerupFlash('shield');
           setTimeout(() => setPowerupFlash(null), 600);
           setFeedback(null);
@@ -195,60 +282,94 @@ export default function GameScreen() {
           return;
         }
 
+        // Enemy attacks
         setFeedback('wrong');
-        setMascotMood('encourage');
+        spawnUnit('enemy');
         setStreak(0);
         soundManager.playWrong();
 
+        setPlayerHP((prev) => {
+          const newHP = Math.max(0, prev - (levelConfig?.enemyAttack || 1));
+          checkGameEnd(newHP, enemyHP, currentIndex);
+          return newHP;
+        });
+
         setTimeout(() => {
           setFeedback(null);
-          setMascotMood('idle');
           timerControls.start();
-        }, 800);
+        }, 600);
       }
     },
-    [gameActive, feedback, currentLetter, wId, streak, advanceToNext, timerControls, activeShield]
+    [gameActive, gameResult, feedback, currentLetter, wId, streak, advanceToNext, timerControls, shieldActive, spawnUnit, levelConfig, playerHP, enemyHP, currentIndex, checkGameEnd]
   );
 
-  useKeyboard(handleKeyPress, gameActive && !feedback);
-
-  // Timer tick sound for last 3 seconds
+  // Attach keydown listener
   useEffect(() => {
-    if (gameActive && timerControls.timeLeft <= 3 && timerControls.timeLeft > 0) {
-      const rounded = Math.ceil(timerControls.timeLeft);
-      if (Math.abs(timerControls.timeLeft - rounded) < 0.06) {
-        soundManager.playTick();
-      }
+    if (!gameActive) return;
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown, gameActive]);
+
+  // Power-up activation via spacebar
+  const activatePowerup = useCallback(() => {
+    if (!selectedPowerup || feedback) return;
+
+    if (selectedPowerup === 'shield' && shieldCharges > 0) {
+      setShieldCharges((prev) => prev - 1);
+      setShieldActive(true);
+      setPowerupFlash('shield');
+      setTimeout(() => setPowerupFlash(null), 600);
+      soundManager.playClick();
+    } else if (selectedPowerup === 'slowTime' && slowCharges > 0) {
+      setSlowCharges((prev) => prev - 1);
+      setSlowActive(true);
+      timerControls.start(); // restart with doubled time
+      setPowerupFlash('slowTime');
+      setTimeout(() => setPowerupFlash(null), 600);
+      soundManager.playClick();
+    } else if (selectedPowerup === 'fireball' && fireballCharges > 0) {
+      setFireballCharges((prev) => prev - 1);
+      setFireballActive(true);
+      setPowerupFlash('fireball');
+      setTimeout(() => setPowerupFlash(null), 600);
+      soundManager.playCorrect();
+
+      // Fireball damages enemy castle directly
+      setTimeout(() => {
+        setEnemyHP((prev) => {
+          const newHP = Math.max(0, prev - (levelConfig?.fireballDamage || 2));
+          checkGameEnd(playerHP, newHP, currentIndex);
+          return newHP;
+        });
+        setFireballActive(false);
+      }, 600);
     }
-  }, [timerControls.timeLeft, gameActive]);
+  }, [selectedPowerup, shieldCharges, slowCharges, fireballCharges, feedback, timerControls, levelConfig, playerHP, currentIndex, checkGameEnd]);
 
-  // Power-up handlers
-  const usePowerup = (type) => {
-    if (powerups[type] <= 0 || !gameActive || feedback) return;
-    setPowerups((prev) => ({ ...prev, [type]: prev[type] - 1 }));
-    soundManager.playClick();
-    setPowerupFlash(type);
-    setTimeout(() => setPowerupFlash(null), 600);
+  // Recharge a random power-up
+  const rechargeRandomPowerup = useCallback(() => {
+    const options = [];
+    if (shieldCharges < 3) options.push('shield');
+    if (availablePowerups.includes('slowTime') && slowCharges < 3) options.push('slowTime');
+    if (availablePowerups.includes('fireball') && fireballCharges < 3) options.push('fireball');
+    if (options.length === 0) return;
 
-    switch (type) {
-      case 'slowTime':
-        setSlowActive(true);
-        timerControls.start(); // restart with doubled time
-        break;
-      case 'owlHint':
-        setShowHint(true);
-        setTimeout(() => setShowHint(false), 2000);
-        break;
-      case 'shield':
-        setActiveShield(true);
-        break;
-    }
-  };
+    const choice = options[Math.floor(Math.random() * options.length)];
+    if (choice === 'shield') setShieldCharges((prev) => Math.min(3, prev + 1));
+    if (choice === 'slowTime') setSlowCharges((prev) => Math.min(3, prev + 1));
+    if (choice === 'fireball') setFireballCharges((prev) => Math.min(3, prev + 1));
+  }, [shieldCharges, slowCharges, fireballCharges, availablePowerups]);
 
-  if (!world) {
+  if (!world || !levelConfig) {
     navigate('/worlds');
     return null;
   }
+
+  const powerupDefs = [
+    { key: 'shield', name: 'Shield', icon: 'shield', color: '#AB47BC', charges: shieldCharges },
+    ...(availablePowerups.includes('slowTime') ? [{ key: 'slowTime', name: 'Slow', icon: 'hourglass', color: '#42A5F5', charges: slowCharges }] : []),
+    ...(availablePowerups.includes('fireball') ? [{ key: 'fireball', name: 'Fire', icon: 'fireball', color: '#FF9800', charges: fireballCharges }] : []),
+  ];
 
   return (
     <div className="h-full w-full flex flex-col items-center relative overflow-hidden">
@@ -257,26 +378,43 @@ export default function GameScreen() {
       <StreakBanner streak={streak} />
 
       {/* Top bar */}
-      <div className="relative z-10 w-full flex items-center justify-between px-6 pt-4">
+      <div className="relative z-10 w-full flex items-center justify-between px-4 pt-3">
         <Button variant="ghost" size="sm" onClick={() => navigate(`/world/${wId}`)}>
           ✕
         </Button>
-        <div className="flex items-center gap-4 text-white font-fredoka">
-          <span className="text-lg flex items-center gap-1">
-            <PixelIcon name="star" size={20} /> {score}
+        <div className="flex items-center gap-3 text-white font-fredoka">
+          <span className="text-base flex items-center gap-1">
+            <PixelIcon name="star" size={18} /> {score}
           </span>
-          <span className="text-lg opacity-70">
-            {currentIndex + 1}/{LETTERS_PER_LEVEL}
+          <span className="text-base opacity-70">
+            {currentIndex + 1}/{letters.length}
           </span>
         </div>
-        <div className="w-16" />
+        <div className="w-12" />
       </div>
 
-      {/* Game area */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center gap-4">
+      {/* Battlefield */}
+      <div className="relative z-10 w-full px-4 mt-1">
+        <div className="bg-gradient-to-b from-sky-600/40 to-emerald-800/40 rounded-xl border-2 border-white/20 overflow-hidden">
+          <BattleField
+            playerHP={playerHP}
+            playerMaxHP={levelConfig.playerHP}
+            enemyHP={enemyHP}
+            enemyMaxHP={levelConfig.enemyHP}
+            units={units}
+            fireballActive={fireballActive}
+            onFireballComplete={() => setFireballActive(false)}
+            shieldActive={shieldActive}
+            slowActive={slowActive}
+          />
+        </div>
+      </div>
+
+      {/* Game area — letter + timer */}
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center gap-3">
         {showCountdown ? (
           <motion.div
-            className="font-bubblegum text-8xl text-white drop-shadow-lg"
+            className="font-bubblegum text-7xl text-white drop-shadow-lg"
             initial={{ scale: 2, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.5 }}
@@ -284,13 +422,28 @@ export default function GameScreen() {
           >
             Ready?
           </motion.div>
+        ) : gameResult ? (
+          <motion.div
+            className="text-center"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring' }}
+          >
+            <div className="font-bubblegum text-5xl text-white drop-shadow-lg mb-2">
+              {gameResult === 'win' ? 'Victory!' : 'Defeated!'}
+            </div>
+            <PixelIcon
+              name={gameResult === 'win' ? 'goldTrophy' : 'enemyCastle'}
+              size={80}
+            />
+          </motion.div>
         ) : (
           <>
             {/* Timer */}
             <TimerRing
               progress={timerControls.progress}
               timeLeft={timerControls.timeLeft}
-              size={80}
+              size={70}
             />
 
             {/* Letter display */}
@@ -298,44 +451,33 @@ export default function GameScreen() {
               <motion.div
                 key={`${currentIndex}-${currentLetter}`}
                 className={`
-                  w-52 h-52 rounded-3xl flex items-center justify-center relative
+                  w-40 h-40 rounded-2xl flex items-center justify-center
                   bg-white/90 shadow-2xl backdrop-blur-sm
-                  ${feedback === 'correct' ? 'ring-8 ring-green-400' : ''}
-                  ${feedback === 'wrong' ? 'ring-8 ring-red-300' : ''}
+                  ${feedback === 'correct' ? 'ring-6 ring-green-400' : ''}
+                  ${feedback === 'wrong' || feedback === 'expired' ? 'ring-6 ring-red-300' : ''}
                 `}
                 initial={{ scale: 0, rotate: -10 }}
                 animate={{
                   scale: 1,
                   rotate: 0,
-                  x: feedback === 'wrong' ? [0, -10, 10, -10, 10, 0] : 0,
+                  x: feedback === 'wrong' ? [0, -8, 8, -8, 8, 0] : 0,
                 }}
                 exit={{ scale: 0, opacity: 0 }}
                 transition={{
                   type: 'spring',
                   stiffness: 200,
                   damping: 15,
-                  x: { duration: 0.4 },
+                  x: { duration: 0.3 },
                 }}
               >
-                {/* Shield indicator */}
-                {activeShield && (
-                  <motion.div
-                    className="absolute -top-3 -right-3"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                  >
-                    <PixelIcon name="shield" size={28} />
-                  </motion.div>
-                )}
-
                 <span
                   className="font-bubblegum select-none"
                   style={{
-                    fontSize: '10rem',
+                    fontSize: '7rem',
                     lineHeight: 1,
                     color: feedback === 'correct'
                       ? '#4caf50'
-                      : feedback === 'wrong'
+                      : feedback === 'wrong' || feedback === 'expired'
                         ? '#ef5350'
                         : world.colors.primary,
                   }}
@@ -345,91 +487,72 @@ export default function GameScreen() {
               </motion.div>
             </AnimatePresence>
 
-            {/* Hint display */}
-            <AnimatePresence>
-              {showHint && currentLetter && (
-                <motion.div
-                  className="bg-white/90 rounded-2xl px-6 py-3 shadow-lg font-fredoka text-xl flex items-center gap-2"
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  style={{ color: world.colors.primary }}
-                >
-                  <PixelIcon name="owl" size={24} />
-                  Press the "{currentLetter}" key!
-                </motion.div>
-              )}
-            </AnimatePresence>
-
             {/* Feedback text */}
             <AnimatePresence>
-              {feedback === 'correct' && !showHint && (
+              {feedback === 'correct' && (
                 <motion.p
-                  className="font-fredoka text-2xl text-white drop-shadow font-semibold flex items-center gap-2"
-                  initial={{ y: 20, opacity: 0 }}
+                  className="font-fredoka text-lg text-white drop-shadow font-semibold flex items-center gap-2"
+                  initial={{ y: 10, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ opacity: 0 }}
                 >
-                  Great job! <PixelIcon name="star" size={24} />
+                  Attack! <PixelIcon name="playerSoldier" size={20} />
                 </motion.p>
               )}
-              {feedback === 'wrong' && (
+              {(feedback === 'wrong' || feedback === 'expired') && (
                 <motion.p
-                  className="font-fredoka text-2xl text-white drop-shadow flex items-center gap-2"
-                  initial={{ y: 20, opacity: 0 }}
+                  className="font-fredoka text-lg text-white drop-shadow flex items-center gap-2"
+                  initial={{ y: 10, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ opacity: 0 }}
                 >
-                  Try again! You can do it! <PixelIcon name="flex" size={24} />
-                </motion.p>
-              )}
-              {feedback === 'expired' && (
-                <motion.p
-                  className="font-fredoka text-2xl text-white drop-shadow flex items-center gap-2"
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  Let's try the next one! <PixelIcon name="sparkle" size={24} />
+                  Enemy attacks! <PixelIcon name="enemySoldier" size={20} />
                 </motion.p>
               )}
             </AnimatePresence>
+          </>
+        )}
+      </div>
 
+      {/* Power-up bar (bottom) */}
+      {!showCountdown && !gameResult && (
+        <div className="relative z-10 w-full px-4 pb-4">
+          <div className="bg-black/30 backdrop-blur-sm rounded-xl px-3 py-2 flex items-center justify-between">
             {/* Power-up buttons */}
-            <div className="flex gap-3 mt-2">
-              {Object.entries(POWERUPS).map(([key, pu]) => {
-                const charges = powerups[key];
-                const isActive = (key === 'shield' && activeShield) || (key === 'slowTime' && slowActive);
-
+            <div className="flex gap-2">
+              {powerupDefs.map((pu) => {
+                const isSelected = selectedPowerup === pu.key;
                 return (
                   <motion.button
-                    key={key}
+                    key={pu.key}
                     className={`
-                      relative flex flex-col items-center gap-1 px-3 py-2 rounded-2xl
-                      cursor-pointer select-none transition-colors min-w-[72px]
-                      ${charges > 0
-                        ? 'bg-white/80 shadow-md hover:shadow-lg'
-                        : 'bg-white/30 opacity-50 cursor-not-allowed'}
-                      ${isActive ? 'ring-2 ring-yellow-400' : ''}
+                      relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl
+                      cursor-pointer select-none transition-all min-w-[60px]
+                      ${pu.charges > 0
+                        ? isSelected
+                          ? 'bg-white/90 shadow-lg ring-2 ring-yellow-400'
+                          : 'bg-white/60 shadow hover:bg-white/80'
+                        : 'bg-white/20 opacity-40 cursor-not-allowed'}
                     `}
-                    whileHover={charges > 0 ? { scale: 1.1 } : {}}
-                    whileTap={charges > 0 ? { scale: 0.9 } : {}}
-                    onClick={() => usePowerup(key)}
-                    animate={powerupFlash === key ? { scale: [1, 1.3, 1] } : {}}
+                    whileTap={pu.charges > 0 ? { scale: 0.9 } : {}}
+                    onClick={() => {
+                      if (pu.charges > 0) {
+                        setSelectedPowerup(isSelected ? null : pu.key);
+                        soundManager.playClick();
+                      }
+                    }}
+                    animate={powerupFlash === pu.key ? { scale: [1, 1.3, 1] } : {}}
                   >
-                    <PixelIcon name={pu.icon} size={28} />
-                    <span className="font-fredoka text-xs font-semibold" style={{ color: pu.color }}>
+                    <PixelIcon name={pu.icon} size={24} />
+                    <span className="font-fredoka text-[10px] font-bold" style={{ color: pu.color }}>
                       {pu.name}
                     </span>
-                    {/* Charge dots */}
                     <div className="flex gap-0.5">
                       {[0, 1, 2].map((i) => (
                         <div
                           key={i}
-                          className="w-2 h-2 rounded-full"
-                          style={{
-                            background: i < charges ? pu.color : '#ccc',
-                          }}
+                          className="w-1.5 h-1.5 rounded-full"
+                          style={{ background: i < pu.charges ? pu.color : '#666' }}
                         />
                       ))}
                     </div>
@@ -437,23 +560,35 @@ export default function GameScreen() {
                 );
               })}
             </div>
-          </>
-        )}
-      </div>
 
-      {/* Mascot */}
-      <div className="absolute bottom-6 right-6 z-20">
-        <Mascot mood={mascotMood} size={50} />
-      </div>
+            {/* Spacebar hint */}
+            <div className="flex flex-col items-center">
+              <motion.div
+                className={`
+                  px-4 py-1.5 rounded-lg font-fredoka text-sm font-bold
+                  ${selectedPowerup ? 'bg-yellow-400 text-gray-800' : 'bg-white/20 text-white/50'}
+                `}
+                animate={selectedPowerup ? { scale: [1, 1.05, 1] } : {}}
+                transition={{ duration: 1, repeat: Infinity }}
+              >
+                SPACE
+              </motion.div>
+              <span className="font-fredoka text-[10px] text-white/60 mt-0.5">
+                {selectedPowerup ? 'Press to use!' : 'Select a power'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Streak display */}
-      {streak > 0 && (
+      {streak > 0 && !gameResult && (
         <motion.div
-          className="absolute bottom-6 left-6 z-20 font-fredoka text-white drop-shadow text-lg flex items-center gap-1"
+          className="absolute top-14 left-4 z-20 font-fredoka text-white drop-shadow text-sm flex items-center gap-1 bg-black/20 rounded-full px-2 py-1"
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
         >
-          <PixelIcon name="fire" size={20} /> {streak} streak
+          <PixelIcon name="fire" size={16} /> {streak}x
         </motion.div>
       )}
     </div>

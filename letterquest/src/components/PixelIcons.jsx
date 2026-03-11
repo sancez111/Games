@@ -880,6 +880,128 @@ const confettiDiamondData = px([
   [4, 5, 8, 1, '#81C784'],
 ]);
 
+// ─── TOWER DEFENSE ICONS ───
+
+const playerCastleData = px([
+  // main tower
+  [5, 2, 6, 10, '#42A5F5'],
+  [4, 3, 8, 9, '#42A5F5'],
+  // battlements
+  [4, 1, 2, 1, '#1E88E5'],
+  [7, 1, 2, 1, '#1E88E5'],
+  [10, 1, 2, 1, '#1E88E5'],
+  // windows
+  [6, 4, 2, 2, '#E3F2FD'],
+  [9, 4, 1, 2, '#E3F2FD'],
+  // gate
+  [6, 8, 4, 4, '#1565C0'],
+  [7, 7, 2, 1, '#1565C0'],
+  // flag
+  [8, 0, 1, 2, '#FFD600'],
+  // base
+  [3, 12, 10, 2, '#1E88E5'],
+  [2, 14, 12, 2, '#1565C0'],
+  // highlights
+  [5, 3, 1, 3, '#64B5F6'],
+], 16);
+
+const enemyCastleData = px([
+  // main tower
+  [5, 2, 6, 10, '#EF5350'],
+  [4, 3, 8, 9, '#EF5350'],
+  // battlements (spiky)
+  [4, 1, 1, 1, '#C62828'],
+  [6, 0, 1, 2, '#C62828'],
+  [9, 0, 1, 2, '#C62828'],
+  [11, 1, 1, 1, '#C62828'],
+  // eyes (menacing)
+  [6, 4, 2, 2, '#FFF9C4'],
+  [9, 4, 2, 2, '#FFF9C4'],
+  [6, 5, 1, 1, '#212121'],
+  [10, 5, 1, 1, '#212121'],
+  // gate (mouth)
+  [6, 8, 4, 3, '#B71C1C'],
+  [7, 8, 1, 1, '#FFF9C4'],
+  [9, 8, 1, 1, '#FFF9C4'],
+  // base
+  [3, 12, 10, 2, '#C62828'],
+  [2, 14, 12, 2, '#B71C1C'],
+], 16);
+
+const playerSoldierData = px([
+  // helmet
+  [5, 1, 6, 3, '#42A5F5'],
+  [6, 0, 4, 1, '#1E88E5'],
+  // face
+  [6, 4, 4, 3, '#FFCC80'],
+  // eyes
+  [7, 5, 1, 1, '#212121'],
+  [9, 5, 1, 1, '#212121'],
+  // body/armor
+  [5, 7, 6, 4, '#1E88E5'],
+  [4, 8, 8, 3, '#42A5F5'],
+  // shield (left hand)
+  [3, 7, 2, 4, '#FFD600'],
+  [3, 8, 1, 2, '#FFC107'],
+  // sword (right hand)
+  [12, 5, 1, 4, '#B0BEC5'],
+  [12, 4, 1, 1, '#CFD8DC'],
+  [11, 8, 1, 1, '#8D6E63'],
+  // legs
+  [6, 11, 2, 3, '#1565C0'],
+  [9, 11, 2, 3, '#1565C0'],
+  // feet
+  [5, 14, 3, 1, '#795548'],
+  [9, 14, 3, 1, '#795548'],
+], 16);
+
+const enemySoldierData = px([
+  // helmet (spiky)
+  [5, 1, 6, 3, '#EF5350'],
+  [7, 0, 2, 1, '#C62828'],
+  [5, 0, 1, 1, '#C62828'],
+  [10, 0, 1, 1, '#C62828'],
+  // face
+  [6, 4, 4, 3, '#90A4AE'],
+  // eyes (red)
+  [7, 5, 1, 1, '#FF1744'],
+  [9, 5, 1, 1, '#FF1744'],
+  // body
+  [5, 7, 6, 4, '#C62828'],
+  [4, 8, 8, 3, '#EF5350'],
+  // weapon (axe)
+  [3, 5, 2, 2, '#B0BEC5'],
+  [3, 7, 1, 3, '#795548'],
+  [12, 6, 2, 2, '#B0BEC5'],
+  // legs
+  [6, 11, 2, 3, '#B71C1C'],
+  [9, 11, 2, 3, '#B71C1C'],
+  // feet
+  [5, 14, 3, 1, '#455A64'],
+  [9, 14, 3, 1, '#455A64'],
+], 16);
+
+const fireballData = px([
+  // core
+  [6, 5, 4, 4, '#FFF176'],
+  [5, 6, 6, 3, '#FFF176'],
+  // mid flame
+  [4, 4, 8, 6, '#FFD600'],
+  [5, 3, 6, 1, '#FFD600'],
+  [5, 10, 6, 1, '#FFD600'],
+  // outer flame
+  [3, 5, 1, 4, '#FF9800'],
+  [12, 5, 1, 4, '#FF9800'],
+  [5, 2, 2, 1, '#FF9800'],
+  [9, 2, 2, 1, '#FF9800'],
+  // trail
+  [4, 10, 2, 2, '#FF5722'],
+  [10, 10, 2, 2, '#FF5722'],
+  [5, 12, 2, 2, '#FF572280'],
+  [9, 12, 2, 2, '#FF572280'],
+  [6, 14, 4, 1, '#FF572240'],
+], 16);
+
 // ─── SEASHELL ───
 
 const seashellData = px([
@@ -977,6 +1099,13 @@ export const PIXEL_ICONS = {
   hourglass: hourglassData,
   hintBubble: hintBubbleData,
   shield: shieldData,
+
+  // Tower Defense
+  playerCastle: playerCastleData,
+  enemyCastle: enemyCastleData,
+  playerSoldier: playerSoldierData,
+  enemySoldier: enemySoldierData,
+  fireball: fireballData,
 
   // Settings
   soundOn: soundOnData,

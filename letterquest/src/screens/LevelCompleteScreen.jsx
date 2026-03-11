@@ -18,9 +18,9 @@ export default function LevelCompleteScreen() {
   const location = useLocation();
   const { state: gameState, dispatch } = useGame();
 
-  const { correct = 0, score = 0, total = LETTERS_PER_LEVEL } = location.state || {};
+  const { correct = 0, score = 0, total = LETTERS_PER_LEVEL, won = false } = location.state || {};
 
-  const passed = correct >= PASS_THRESHOLD;
+  const passed = won || correct >= PASS_THRESHOLD;
   const accuracy = Math.round((correct / total) * 100);
 
   // Determine trophy tier
@@ -72,7 +72,7 @@ export default function LevelCompleteScreen() {
         style={{
           background: passed
             ? 'linear-gradient(to bottom, #a5d6a7, #e8f5e9)'
-            : 'linear-gradient(to bottom, #90caf9, #e3f2fd)',
+            : 'linear-gradient(to bottom, #ef9a9a, #ffebee)',
         }}
       />
       <Confetti active={passed} type="confetti" />
@@ -90,27 +90,17 @@ export default function LevelCompleteScreen() {
           initial={{ y: -20 }}
           animate={{ y: 0 }}
         >
-          {passed ? 'Level Complete!' : 'Nice Try!'}
+          {passed ? 'Castle Destroyed!' : 'Castle Survived!'}
         </motion.h2>
 
-        {/* Icon */}
+        {/* Trophy */}
         <motion.div
-          animate={{ scale: [1, 1.2, 1] }}
-          transition={{ duration: 0.6, delay: 0.3 }}
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
         >
-          <PixelIcon name={passed ? 'partyPopper' : 'flex'} size={64} />
+          <Medal type={medal || (passed ? 'bronze' : null)} size={160} animate />
         </motion.div>
-
-        {/* Medal */}
-        {medal && (
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.5, type: 'spring' }}
-          >
-            <Medal type={medal} size={80} animate />
-          </motion.div>
-        )}
 
         {/* Stats */}
         <div className="flex gap-8 mt-2 font-fredoka text-lg text-gray-700">
@@ -136,8 +126,8 @@ export default function LevelCompleteScreen() {
 
         {!passed && (
           <p className="font-fredoka text-gray-500 text-center mt-2">
-            You need {PASS_THRESHOLD} correct to pass.<br />
-            Keep trying, you'll get it!
+            Your castle fell! Try using power-ups<br />
+            to defend and attack. You got this!
           </p>
         )}
 
