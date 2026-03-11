@@ -89,8 +89,8 @@ export const WORLDS = [
 ];
 
 export const LEVELS_PER_WORLD = 5;
-export const LETTERS_PER_LEVEL = 10;
-export const PASS_THRESHOLD = 7;
+export const LETTERS_PER_LEVEL = 5;
+export const PASS_THRESHOLD = 3;
 
 // Generate the letters for a specific level within a world
 export function generateLevelLetters(worldId, levelIndex) {

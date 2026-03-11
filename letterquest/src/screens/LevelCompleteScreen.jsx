@@ -23,10 +23,10 @@ export default function LevelCompleteScreen() {
   const passed = correct >= PASS_THRESHOLD;
   const accuracy = Math.round((correct / total) * 100);
 
-  // Determine medal
+  // Determine trophy tier
   let medal = null;
   if (correct >= total) medal = 'gold';
-  else if (correct >= 8) medal = 'silver';
+  else if (correct >= total - 1) medal = 'silver';
   else if (correct >= PASS_THRESHOLD) medal = 'bronze';
 
   const [saved, setSaved] = useState(false);

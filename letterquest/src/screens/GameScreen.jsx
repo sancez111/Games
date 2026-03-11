@@ -14,6 +14,13 @@ import Button from '../components/Button';
 import PixelIcon from '../components/PixelIcons';
 import { soundManager } from '../utils/soundManager';
 
+// Power-up definitions
+const POWERUPS = {
+  slowTime: { name: 'Slow Time', icon: 'hourglass', color: '#42A5F5', desc: 'More time!' },
+  owlHint: { name: 'Owl Hint', icon: 'hintBubble', color: '#66BB6A', desc: 'Shows the key!' },
+  shield: { name: 'Shield', icon: 'shield', color: '#AB47BC', desc: 'Blocks a miss!' },
+};
+
 export default function GameScreen() {
   const { worldId, levelIndex } = useParams();
   const wId = parseInt(worldId);
@@ -28,19 +35,35 @@ export default function GameScreen() {
   const [score, setScore] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [streak, setStreak] = useState(0);
-  const [feedback, setFeedback] = useState(null); // 'correct' | 'wrong' | 'expired'
+  const [feedback, setFeedback] = useState(null);
   const [mascotMood, setMascotMood] = useState('idle');
   const [showConfetti, setShowConfetti] = useState(false);
   const [gameActive, setGameActive] = useState(false);
   const [showCountdown, setShowCountdown] = useState(true);
   const feedbackTimeout = useRef(null);
 
+  // Use refs to track correct/score for the stale closure fix
+  const correctRef = useRef(0);
+  const scoreRef = useRef(0);
+
+  // Power-up state: each starts with 1 charge
+  const [powerups, setPowerups] = useState({
+    slowTime: 1,
+    owlHint: 1,
+    shield: 1,
+  });
+  const [activeShield, setActiveShield] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+  const [slowActive, setSlowActive] = useState(false);
+  const [powerupFlash, setPowerupFlash] = useState(null);
+
   // Initialize level
   useEffect(() => {
     const levelLetters = generateLevelLetters(wId, lIdx);
     setLetters(levelLetters);
+    correctRef.current = 0;
+    scoreRef.current = 0;
 
-    // 3-2-1 countdown before starting
     const timer = setTimeout(() => {
       setShowCountdown(false);
       setGameActive(true);
@@ -54,12 +77,11 @@ export default function GameScreen() {
   // Move to next letter or finish
   const advanceToNext = useCallback(() => {
     if (currentIndex + 1 >= LETTERS_PER_LEVEL) {
-      // Level complete
       setGameActive(false);
-      const finalCorrect = correct;
-      const finalScore = score;
+      // Use refs for accurate values
+      const finalCorrect = correctRef.current;
+      const finalScore = scoreRef.current;
 
-      // Navigate to results after a short delay
       setTimeout(() => {
         navigate(`/complete/${wId}/${lIdx}`, {
           state: {
@@ -70,27 +92,46 @@ export default function GameScreen() {
         });
       }, 800);
     } else {
-      // Next letter after pause
       setTimeout(() => {
         setCurrentIndex((prev) => prev + 1);
         setFeedback(null);
         setMascotMood('idle');
+        setShowHint(false);
+        setSlowActive(false);
         timerControls.start();
       }, 1200);
     }
-  }, [currentIndex, correct, score, wId, lIdx, navigate]);
+  }, [currentIndex, wId, lIdx, navigate]);
 
   // Handle timer expire
   const handleTimerExpire = useCallback(() => {
     if (!gameActive) return;
+
+    // Shield absorbs the miss
+    if (activeShield) {
+      setActiveShield(false);
+      setFeedback('correct');
+      setMascotMood('happy');
+      setPowerupFlash('shield');
+      setTimeout(() => setPowerupFlash(null), 600);
+      soundManager.playCorrect();
+      correctRef.current += 1;
+      setCorrect(correctRef.current);
+      scoreRef.current += 10;
+      setScore(scoreRef.current);
+      advanceToNext();
+      return;
+    }
+
     setFeedback('expired');
     setMascotMood('encourage');
     setStreak(0);
     soundManager.playWrong();
     advanceToNext();
-  }, [gameActive, advanceToNext]);
+  }, [gameActive, activeShield, advanceToNext]);
 
-  const timerControls = useTimer(world?.timer || 10, handleTimerExpire, gameActive);
+  const timerDuration = slowActive ? (world?.timer || 10) * 2 : (world?.timer || 10);
+  const timerControls = useTimer(timerDuration, handleTimerExpire, gameActive);
 
   // Start timer when game becomes active
   useEffect(() => {
@@ -107,17 +148,34 @@ export default function GameScreen() {
       timerControls.reset();
 
       if (checkAnswer(key, currentLetter, wId)) {
-        // Correct!
         const newStreak = streak + 1;
         const points = 10;
 
+        // Update refs immediately
+        correctRef.current += 1;
+        scoreRef.current += points;
+
         setFeedback('correct');
-        setCorrect((prev) => prev + 1);
-        setScore((prev) => prev + points);
+        setCorrect(correctRef.current);
+        setScore(scoreRef.current);
         setStreak(newStreak);
         setMascotMood('happy');
         setShowConfetti(true);
         soundManager.playCorrect();
+
+        // Award power-up charge every 2 correct in a streak
+        if (newStreak > 0 && newStreak % 2 === 0) {
+          setPowerups((prev) => {
+            const keys = Object.keys(prev);
+            // Find first power-up below max (3)
+            for (const k of keys) {
+              if (prev[k] < 3) {
+                return { ...prev, [k]: prev[k] + 1 };
+              }
+            }
+            return prev;
+          });
+        }
 
         if (newStreak === 3 || newStreak === 5 || newStreak === 10) {
           soundManager.playStreak(newStreak);
@@ -126,13 +184,22 @@ export default function GameScreen() {
         setTimeout(() => setShowConfetti(false), 500);
         advanceToNext();
       } else {
-        // Wrong
+        // Shield absorbs wrong answer
+        if (activeShield) {
+          setActiveShield(false);
+          setPowerupFlash('shield');
+          setTimeout(() => setPowerupFlash(null), 600);
+          setFeedback(null);
+          soundManager.playClick();
+          timerControls.start();
+          return;
+        }
+
         setFeedback('wrong');
         setMascotMood('encourage');
         setStreak(0);
         soundManager.playWrong();
 
-        // Let them try again after feedback clears
         setTimeout(() => {
           setFeedback(null);
           setMascotMood('idle');
@@ -140,7 +207,7 @@ export default function GameScreen() {
         }, 800);
       }
     },
-    [gameActive, feedback, currentLetter, wId, streak, advanceToNext, timerControls]
+    [gameActive, feedback, currentLetter, wId, streak, advanceToNext, timerControls, activeShield]
   );
 
   useKeyboard(handleKeyPress, gameActive && !feedback);
@@ -154,6 +221,29 @@ export default function GameScreen() {
       }
     }
   }, [timerControls.timeLeft, gameActive]);
+
+  // Power-up handlers
+  const usePowerup = (type) => {
+    if (powerups[type] <= 0 || !gameActive || feedback) return;
+    setPowerups((prev) => ({ ...prev, [type]: prev[type] - 1 }));
+    soundManager.playClick();
+    setPowerupFlash(type);
+    setTimeout(() => setPowerupFlash(null), 600);
+
+    switch (type) {
+      case 'slowTime':
+        setSlowActive(true);
+        timerControls.start(); // restart with doubled time
+        break;
+      case 'owlHint':
+        setShowHint(true);
+        setTimeout(() => setShowHint(false), 2000);
+        break;
+      case 'shield':
+        setActiveShield(true);
+        break;
+    }
+  };
 
   if (!world) {
     navigate('/worlds');
@@ -183,7 +273,7 @@ export default function GameScreen() {
       </div>
 
       {/* Game area */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center gap-6">
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center gap-4">
         {showCountdown ? (
           <motion.div
             className="font-bubblegum text-8xl text-white drop-shadow-lg"
@@ -200,7 +290,7 @@ export default function GameScreen() {
             <TimerRing
               progress={timerControls.progress}
               timeLeft={timerControls.timeLeft}
-              size={100}
+              size={80}
             />
 
             {/* Letter display */}
@@ -208,7 +298,7 @@ export default function GameScreen() {
               <motion.div
                 key={`${currentIndex}-${currentLetter}`}
                 className={`
-                  w-64 h-64 rounded-3xl flex items-center justify-center
+                  w-52 h-52 rounded-3xl flex items-center justify-center relative
                   bg-white/90 shadow-2xl backdrop-blur-sm
                   ${feedback === 'correct' ? 'ring-8 ring-green-400' : ''}
                   ${feedback === 'wrong' ? 'ring-8 ring-red-300' : ''}
@@ -227,10 +317,21 @@ export default function GameScreen() {
                   x: { duration: 0.4 },
                 }}
               >
+                {/* Shield indicator */}
+                {activeShield && (
+                  <motion.div
+                    className="absolute -top-3 -right-3"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                  >
+                    <PixelIcon name="shield" size={28} />
+                  </motion.div>
+                )}
+
                 <span
                   className="font-bubblegum select-none"
                   style={{
-                    fontSize: '12rem',
+                    fontSize: '10rem',
                     lineHeight: 1,
                     color: feedback === 'correct'
                       ? '#4caf50'
@@ -244,9 +345,25 @@ export default function GameScreen() {
               </motion.div>
             </AnimatePresence>
 
+            {/* Hint display */}
+            <AnimatePresence>
+              {showHint && currentLetter && (
+                <motion.div
+                  className="bg-white/90 rounded-2xl px-6 py-3 shadow-lg font-fredoka text-xl flex items-center gap-2"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  style={{ color: world.colors.primary }}
+                >
+                  <PixelIcon name="owl" size={24} />
+                  Press the "{currentLetter}" key!
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Feedback text */}
             <AnimatePresence>
-              {feedback === 'correct' && (
+              {feedback === 'correct' && !showHint && (
                 <motion.p
                   className="font-fredoka text-2xl text-white drop-shadow font-semibold flex items-center gap-2"
                   initial={{ y: 20, opacity: 0 }}
@@ -277,13 +394,56 @@ export default function GameScreen() {
                 </motion.p>
               )}
             </AnimatePresence>
+
+            {/* Power-up buttons */}
+            <div className="flex gap-3 mt-2">
+              {Object.entries(POWERUPS).map(([key, pu]) => {
+                const charges = powerups[key];
+                const isActive = (key === 'shield' && activeShield) || (key === 'slowTime' && slowActive);
+
+                return (
+                  <motion.button
+                    key={key}
+                    className={`
+                      relative flex flex-col items-center gap-1 px-3 py-2 rounded-2xl
+                      cursor-pointer select-none transition-colors min-w-[72px]
+                      ${charges > 0
+                        ? 'bg-white/80 shadow-md hover:shadow-lg'
+                        : 'bg-white/30 opacity-50 cursor-not-allowed'}
+                      ${isActive ? 'ring-2 ring-yellow-400' : ''}
+                    `}
+                    whileHover={charges > 0 ? { scale: 1.1 } : {}}
+                    whileTap={charges > 0 ? { scale: 0.9 } : {}}
+                    onClick={() => usePowerup(key)}
+                    animate={powerupFlash === key ? { scale: [1, 1.3, 1] } : {}}
+                  >
+                    <PixelIcon name={pu.icon} size={28} />
+                    <span className="font-fredoka text-xs font-semibold" style={{ color: pu.color }}>
+                      {pu.name}
+                    </span>
+                    {/* Charge dots */}
+                    <div className="flex gap-0.5">
+                      {[0, 1, 2].map((i) => (
+                        <div
+                          key={i}
+                          className="w-2 h-2 rounded-full"
+                          style={{
+                            background: i < charges ? pu.color : '#ccc',
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </motion.button>
+                );
+              })}
+            </div>
           </>
         )}
       </div>
 
       {/* Mascot */}
       <div className="absolute bottom-6 right-6 z-20">
-        <Mascot mood={mascotMood} size={60} />
+        <Mascot mood={mascotMood} size={50} />
       </div>
 
       {/* Streak display */}

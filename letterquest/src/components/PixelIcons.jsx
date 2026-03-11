@@ -535,52 +535,130 @@ const cherryBlossomData = px([
   [7, 5, 2, 2, '#FFEB3B'],
 ]);
 
-// ─── MEDAL ICONS ───
+// ─── TROPHY TIER ICONS ───
 
-const goldMedalData = px([
-  // ribbon
-  [5, 0, 2, 4, '#EF5350'],
-  [9, 0, 2, 4, '#42A5F5'],
-  [6, 3, 4, 2, '#EF5350'],
-  // medal body
-  [5, 4, 6, 6, '#FFD600'],
-  [4, 5, 8, 5, '#FFD600'],
-  // star on medal
-  [7, 5, 2, 1, '#FFF176'],
-  [6, 6, 4, 2, '#FFF176'],
-  [7, 8, 2, 1, '#FFF176'],
+const goldTrophyData = px([
+  // cup body
+  [5, 1, 6, 6, '#FFD600'],
+  [4, 2, 1, 4, '#FFD600'],
+  [11, 2, 1, 4, '#FFD600'],
+  // handles
+  [3, 3, 1, 2, '#FFC107'],
+  [12, 3, 1, 2, '#FFC107'],
   // shine
-  [5, 5, 1, 1, '#FFF9C4'],
+  [6, 2, 2, 2, '#FFF176'],
+  // star on cup
+  [7, 4, 2, 1, '#FFF9C4'],
+  [6, 5, 4, 1, '#FFF9C4'],
+  [7, 6, 2, 1, '#FFF9C4'],
+  // stem
+  [7, 7, 2, 3, '#FFC107'],
+  // base
+  [5, 10, 6, 2, '#FFD600'],
+  [4, 12, 8, 1, '#FFC107'],
+  // sparkles
+  [2, 1, 1, 1, '#FFF176'],
+  [13, 0, 1, 1, '#FFF176'],
+  [1, 5, 1, 1, '#FFF9C4'],
+  [14, 4, 1, 1, '#FFF9C4'],
 ]);
 
-const silverMedalData = px([
-  // ribbon
-  [5, 0, 2, 4, '#EF5350'],
-  [9, 0, 2, 4, '#42A5F5'],
-  [6, 3, 4, 2, '#EF5350'],
-  // medal body
-  [5, 4, 6, 6, '#B0BEC5'],
-  [4, 5, 8, 5, '#B0BEC5'],
+const silverTrophyData = px([
+  // cup body
+  [5, 2, 6, 5, '#B0BEC5'],
+  [4, 3, 1, 3, '#B0BEC5'],
+  [11, 3, 1, 3, '#B0BEC5'],
+  // handles
+  [3, 4, 1, 2, '#90A4AE'],
+  [12, 4, 1, 2, '#90A4AE'],
+  // shine
+  [6, 3, 2, 2, '#ECEFF1'],
   // star
-  [7, 5, 2, 1, '#ECEFF1'],
-  [6, 6, 4, 2, '#ECEFF1'],
-  [7, 8, 2, 1, '#ECEFF1'],
-  [5, 5, 1, 1, '#F5F5F5'],
+  [7, 5, 2, 1, '#F5F5F5'],
+  // stem
+  [7, 7, 2, 3, '#90A4AE'],
+  // base
+  [5, 10, 6, 2, '#B0BEC5'],
+  [4, 12, 8, 1, '#90A4AE'],
 ]);
 
-const bronzeMedalData = px([
-  // ribbon
-  [5, 0, 2, 4, '#EF5350'],
-  [9, 0, 2, 4, '#42A5F5'],
-  [6, 3, 4, 2, '#EF5350'],
-  // medal body
-  [5, 4, 6, 6, '#CD7F32'],
-  [4, 5, 8, 5, '#CD7F32'],
-  // star
-  [7, 5, 2, 1, '#DEB887'],
-  [6, 6, 4, 2, '#DEB887'],
-  [7, 8, 2, 1, '#DEB887'],
-  [5, 5, 1, 1, '#E8C07A'],
+const bronzeTrophyData = px([
+  // cup body
+  [5, 3, 6, 4, '#CD7F32'],
+  [4, 4, 1, 2, '#CD7F32'],
+  [11, 4, 1, 2, '#CD7F32'],
+  // handles
+  [3, 4, 1, 2, '#A0522D'],
+  [12, 4, 1, 2, '#A0522D'],
+  // shine
+  [6, 4, 2, 1, '#DEB887'],
+  // stem
+  [7, 7, 2, 3, '#A0522D'],
+  // base
+  [5, 10, 6, 2, '#CD7F32'],
+  [4, 12, 8, 1, '#A0522D'],
+]);
+
+// ─── POWER-UP ICONS ───
+
+const hourglassData = px([
+  // top frame
+  [3, 1, 10, 2, '#42A5F5'],
+  // top sand
+  [5, 3, 6, 2, '#FFD600'],
+  [6, 5, 4, 1, '#FFD600'],
+  // neck
+  [7, 6, 2, 2, '#FFC107'],
+  // bottom sand
+  [6, 8, 4, 1, '#FFD600'],
+  [5, 9, 6, 2, '#FFD600'],
+  [4, 11, 8, 2, '#FFC107'],
+  // bottom frame
+  [3, 13, 10, 2, '#42A5F5'],
+  // glass edges
+  [4, 3, 1, 4, '#90CAF9'],
+  [11, 3, 1, 4, '#90CAF9'],
+  [4, 8, 1, 5, '#90CAF9'],
+  [11, 8, 1, 5, '#90CAF9'],
+]);
+
+const hintBubbleData = px([
+  // speech bubble
+  [4, 1, 8, 7, '#E3F2FD'],
+  [3, 2, 10, 5, '#E3F2FD'],
+  // bubble tail
+  [5, 8, 2, 1, '#E3F2FD'],
+  [4, 9, 2, 1, '#E3F2FD'],
+  // question mark / letter hint
+  [6, 3, 4, 1, '#42A5F5'],
+  [9, 4, 1, 2, '#42A5F5'],
+  [7, 5, 2, 1, '#42A5F5'],
+  [7, 6, 1, 1, '#42A5F5'],
+  // owl eyes peeking
+  [5, 11, 2, 2, '#795548'],
+  [9, 11, 2, 2, '#795548'],
+  [5, 12, 1, 1, '#FFF'],
+  [10, 12, 1, 1, '#FFF'],
+  // owl head
+  [4, 12, 8, 3, '#8D6E63'],
+  [6, 13, 1, 1, '#FF9800'],
+  [9, 13, 1, 1, '#FF9800'],
+]);
+
+const shieldData = px([
+  // shield body
+  [4, 1, 8, 3, '#42A5F5'],
+  [3, 2, 10, 4, '#42A5F5'],
+  [4, 6, 8, 3, '#1E88E5'],
+  [5, 9, 6, 2, '#1E88E5'],
+  [6, 11, 4, 2, '#42A5F5'],
+  [7, 13, 2, 1, '#1E88E5'],
+  // star emblem
+  [7, 4, 2, 1, '#FFD600'],
+  [6, 5, 4, 2, '#FFD600'],
+  [7, 7, 2, 1, '#FFD600'],
+  // shine
+  [4, 2, 2, 2, '#90CAF9'],
 ]);
 
 // ─── OWL MASCOT ───
@@ -890,10 +968,15 @@ export const PIXEL_ICONS = {
   heart: heartData,
   flex: flexData,
 
-  // Medals
-  goldMedal: goldMedalData,
-  silverMedal: silverMedalData,
-  bronzeMedal: bronzeMedalData,
+  // Trophies (tier rewards)
+  goldTrophy: goldTrophyData,
+  silverTrophy: silverTrophyData,
+  bronzeTrophy: bronzeTrophyData,
+
+  // Power-ups
+  hourglass: hourglassData,
+  hintBubble: hintBubbleData,
+  shield: shieldData,
 
   // Settings
   soundOn: soundOnData,
