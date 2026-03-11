@@ -11,6 +11,7 @@ import Confetti from '../components/Confetti';
 import StreakBanner from '../components/StreakBanner';
 import WorldBackground from '../components/WorldBackground';
 import Button from '../components/Button';
+import PixelIcon from '../components/PixelIcons';
 import { soundManager } from '../utils/soundManager';
 
 export default function GameScreen() {
@@ -171,7 +172,9 @@ export default function GameScreen() {
           ✕
         </Button>
         <div className="flex items-center gap-4 text-white font-fredoka">
-          <span className="text-lg">⭐ {score}</span>
+          <span className="text-lg flex items-center gap-1">
+            <PixelIcon name="star" size={20} /> {score}
+          </span>
           <span className="text-lg opacity-70">
             {currentIndex + 1}/{LETTERS_PER_LEVEL}
           </span>
@@ -245,32 +248,32 @@ export default function GameScreen() {
             <AnimatePresence>
               {feedback === 'correct' && (
                 <motion.p
-                  className="font-fredoka text-2xl text-white drop-shadow font-semibold"
+                  className="font-fredoka text-2xl text-white drop-shadow font-semibold flex items-center gap-2"
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ opacity: 0 }}
                 >
-                  Great job! ⭐
+                  Great job! <PixelIcon name="star" size={24} />
                 </motion.p>
               )}
               {feedback === 'wrong' && (
                 <motion.p
-                  className="font-fredoka text-2xl text-white drop-shadow"
+                  className="font-fredoka text-2xl text-white drop-shadow flex items-center gap-2"
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ opacity: 0 }}
                 >
-                  Try again! You can do it! 💪
+                  Try again! You can do it! <PixelIcon name="flex" size={24} />
                 </motion.p>
               )}
               {feedback === 'expired' && (
                 <motion.p
-                  className="font-fredoka text-2xl text-white drop-shadow"
+                  className="font-fredoka text-2xl text-white drop-shadow flex items-center gap-2"
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ opacity: 0 }}
                 >
-                  Let's try the next one! 🌟
+                  Let's try the next one! <PixelIcon name="sparkle" size={24} />
                 </motion.p>
               )}
             </AnimatePresence>
@@ -286,11 +289,11 @@ export default function GameScreen() {
       {/* Streak display */}
       {streak > 0 && (
         <motion.div
-          className="absolute bottom-6 left-6 z-20 font-fredoka text-white drop-shadow text-lg"
+          className="absolute bottom-6 left-6 z-20 font-fredoka text-white drop-shadow text-lg flex items-center gap-1"
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
         >
-          🔥 {streak} streak
+          <PixelIcon name="fire" size={20} /> {streak} streak
         </motion.div>
       )}
     </div>

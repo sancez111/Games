@@ -6,6 +6,7 @@ import { useGame } from '../context/GameContext';
 import Button from '../components/Button';
 import Medal from '../components/Medal';
 import Confetti from '../components/Confetti';
+import PixelIcon from '../components/PixelIcons';
 import { soundManager } from '../utils/soundManager';
 
 export default function LevelCompleteScreen() {
@@ -92,13 +93,12 @@ export default function LevelCompleteScreen() {
           {passed ? 'Level Complete!' : 'Nice Try!'}
         </motion.h2>
 
-        {/* Emoji */}
+        {/* Icon */}
         <motion.div
-          className="text-6xl"
           animate={{ scale: [1, 1.2, 1] }}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
-          {passed ? '🎉' : '💪'}
+          <PixelIcon name={passed ? 'partyPopper' : 'flex'} size={64} />
         </motion.div>
 
         {/* Medal */}
@@ -127,8 +127,8 @@ export default function LevelCompleteScreen() {
             <div>Accuracy</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold" style={{ color: world?.colors.primary }}>
-              ⭐ {score}
+            <div className="text-3xl font-bold flex items-center gap-1 justify-center" style={{ color: world?.colors.primary }}>
+              <PixelIcon name="star" size={24} /> {score}
             </div>
             <div>Points</div>
           </div>
@@ -148,12 +148,13 @@ export default function LevelCompleteScreen() {
             size="md"
             onClick={() => navigate(`/play/${wId}/${lIdx}`)}
             className="!bg-gray-200 !text-gray-700"
+            icon={<PixelIcon name="retry" size={20} />}
           >
-            🔄 Retry
+            Retry
           </Button>
           {passed ? (
             <Button variant="success" size="lg" onClick={handleNext}>
-              {isLastLevel ? (hasNextWorld ? 'Next World ➜' : 'Trophies 🏆') : 'Next Level ➜'}
+              {isLastLevel ? (hasNextWorld ? 'Next World' : 'Trophies') : 'Next Level'} →
             </Button>
           ) : (
             <Button

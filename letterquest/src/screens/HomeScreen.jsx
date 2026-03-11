@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
+import PixelIcon from '../components/PixelIcons';
 import { useGame } from '../context/GameContext';
 import { soundManager } from '../utils/soundManager';
 import { useEffect } from 'react';
@@ -22,32 +23,32 @@ export default function HomeScreen() {
 
       {/* Floating decorations */}
       <motion.div
-        className="absolute top-8 left-12 text-6xl select-none"
+        className="absolute top-8 left-12 select-none"
         animate={{ y: [0, -10, 0] }}
         transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
       >
-        ☁️
+        <PixelIcon name="cloud" size={72} />
       </motion.div>
       <motion.div
-        className="absolute top-16 right-16 text-5xl select-none"
+        className="absolute top-16 right-16 select-none"
         animate={{ y: [0, -8, 0] }}
         transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
       >
-        ☁️
+        <PixelIcon name="cloud" size={56} />
       </motion.div>
       <motion.div
-        className="absolute bottom-12 left-8 text-4xl select-none"
+        className="absolute bottom-12 left-8 select-none"
         animate={{ y: [0, -5, 0] }}
         transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
       >
-        🌻
+        <PixelIcon name="flower" size={48} />
       </motion.div>
       <motion.div
-        className="absolute bottom-8 right-12 text-5xl select-none"
+        className="absolute bottom-8 right-12 select-none"
         animate={{ y: [0, -5, 0] }}
         transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
       >
-        🌸
+        <PixelIcon name="cherryBlossom" size={56} />
       </motion.div>
 
       {/* Title */}
@@ -68,11 +69,11 @@ export default function HomeScreen() {
           A Typing Adventure!
         </p>
         <motion.div
-          className="text-5xl mb-8"
+          className="flex justify-center mb-8"
           animate={{ rotate: [0, 10, -10, 0] }}
           transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
         >
-          🦉
+          <PixelIcon name="owl" size={64} />
         </motion.div>
       </motion.div>
 
@@ -86,7 +87,7 @@ export default function HomeScreen() {
         <Button
           variant="primary"
           size="xl"
-          icon="🎮"
+          icon={<PixelIcon name="controller" size={28} />}
           onClick={() => navigate('/worlds')}
         >
           PLAY
@@ -96,7 +97,7 @@ export default function HomeScreen() {
           <Button
             variant="secondary"
             size="md"
-            icon="🏆"
+            icon={<PixelIcon name="trophy" size={24} />}
             onClick={() => navigate('/trophies')}
           >
             Trophies
@@ -104,7 +105,7 @@ export default function HomeScreen() {
           <Button
             variant="ghost"
             size="md"
-            icon="⚙️"
+            icon={<PixelIcon name="gear" size={24} />}
             onClick={() => navigate('/settings')}
           >
             Settings
@@ -113,11 +114,11 @@ export default function HomeScreen() {
 
         {state.totalPoints > 0 && (
           <motion.div
-            className="mt-4 text-white/70 font-fredoka text-lg"
+            className="mt-4 text-white/70 font-fredoka text-lg flex items-center gap-2"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
-            ⭐ {state.totalPoints} points
+            <PixelIcon name="star" size={20} /> {state.totalPoints} points
           </motion.div>
         )}
       </motion.div>

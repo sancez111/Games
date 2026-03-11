@@ -5,6 +5,7 @@ import { useGame } from '../context/GameContext';
 import Button from '../components/Button';
 import Medal from '../components/Medal';
 import WorldBackground from '../components/WorldBackground';
+import PixelIcon from '../components/PixelIcons';
 
 export default function LevelSelectScreen() {
   const { worldId } = useParams();
@@ -39,8 +40,8 @@ export default function LevelSelectScreen() {
         <Button variant="ghost" size="sm" onClick={() => navigate('/worlds')}>
           ← Back
         </Button>
-        <h2 className="font-bubblegum text-3xl text-white drop-shadow">
-          {world.icon} {world.name}
+        <h2 className="font-bubblegum text-3xl text-white drop-shadow flex items-center gap-2">
+          <PixelIcon name={world.icon} size={36} /> {world.name}
         </h2>
         <div className="w-20" />
       </motion.div>
@@ -76,7 +77,7 @@ export default function LevelSelectScreen() {
                     <Medal type={medal} size={28} />
                   </>
                 ) : (
-                  <span className="text-3xl">🔒</span>
+                  <PixelIcon name="lock" size={36} />
                 )}
               </motion.button>
             );
@@ -87,12 +88,12 @@ export default function LevelSelectScreen() {
       {/* World trophy */}
       {state.trophies.includes(wId) && (
         <motion.div
-          className="relative z-10 pb-6 text-center"
+          className="relative z-10 pb-6 text-center flex flex-col items-center"
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: 'spring' }}
         >
-          <span className="text-5xl">🏆</span>
+          <PixelIcon name="trophy" size={56} />
           <p className="font-fredoka text-white drop-shadow text-lg">World Complete!</p>
         </motion.div>
       )}

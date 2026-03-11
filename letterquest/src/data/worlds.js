@@ -15,7 +15,7 @@ export const WORLDS = [
       accent: '#2e7d32',
       light: '#e8f5e9',
     },
-    icon: '🌲',
+    icon: 'tree',
   },
   {
     id: 2,
@@ -32,7 +32,7 @@ export const WORLDS = [
       accent: '#006064',
       light: '#e0f7fa',
     },
-    icon: '🌊',
+    icon: 'wave',
   },
   {
     id: 3,
@@ -49,7 +49,7 @@ export const WORLDS = [
       accent: '#6a1b9a',
       light: '#f3e5f5',
     },
-    icon: '🚀',
+    icon: 'rocket',
   },
   {
     id: 4,
@@ -67,7 +67,7 @@ export const WORLDS = [
       accent: '#e65100',
       light: '#fff3e0',
     },
-    icon: '🦕',
+    icon: 'dino',
   },
   {
     id: 5,
@@ -84,7 +84,7 @@ export const WORLDS = [
       accent: '#ad1457',
       light: '#fce4ec',
     },
-    icon: '🌈',
+    icon: 'rainbow',
   },
 ];
 

@@ -45,7 +45,7 @@ export default function Button({
       whileTap={disabled ? {} : { scale: 0.95 }}
       disabled={disabled}
     >
-      {icon && <span className="text-2xl">{icon}</span>}
+      {icon && <span className="text-2xl flex items-center">{icon}</span>}
       {children}
     </motion.button>
   );

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { WORLDS } from '../data/worlds';
 import { useGame } from '../context/GameContext';
 import Button from '../components/Button';
+import PixelIcon from '../components/PixelIcons';
 
 export default function WorldMapScreen() {
   const navigate = useNavigate();
@@ -56,14 +57,17 @@ export default function WorldMapScreen() {
               whileTap={isUnlocked ? { scale: 0.97 } : {}}
               onClick={() => handleWorldSelect(world)}
             >
-              <span className="text-4xl">{isUnlocked ? world.icon : '🔒'}</span>
+              {isUnlocked
+                ? <PixelIcon name={world.icon} size={48} />
+                : <PixelIcon name="lock" size={48} />
+              }
               <div className="flex-1">
                 <div className="text-xl font-semibold" style={{ color: isUnlocked ? world.colors.primary : '#999' }}>
                   World {world.id}: {world.name}
                 </div>
                 <div className="text-sm text-gray-500">{world.description}</div>
               </div>
-              {hasTrophy && <span className="text-3xl">🏆</span>}
+              {hasTrophy && <PixelIcon name="trophy" size={36} />}
             </motion.button>
           );
         })}

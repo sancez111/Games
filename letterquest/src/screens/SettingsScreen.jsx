@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { useGame } from '../context/GameContext';
 import { soundManager } from '../utils/soundManager';
 import Button from '../components/Button';
+import PixelIcon from '../components/PixelIcons';
 
 export default function SettingsScreen() {
   const navigate = useNavigate();
@@ -66,8 +67,8 @@ export default function SettingsScreen() {
         <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="!text-gray-700">
           ← Back
         </Button>
-        <h2 className="font-bubblegum text-3xl text-gray-700">
-          ⚙️ Settings
+        <h2 className="font-bubblegum text-3xl text-gray-700 flex items-center gap-2">
+          <PixelIcon name="gear" size={32} /> Settings
         </h2>
         <div className="w-20" />
       </motion.div>
@@ -82,7 +83,7 @@ export default function SettingsScreen() {
           transition={{ delay: 0.1 }}
         >
           <div className="flex items-center gap-3">
-            <span className="text-3xl">{state.settings.soundEnabled ? '🔊' : '🔇'}</span>
+            <PixelIcon name={state.settings.soundEnabled ? 'soundOn' : 'soundOff'} size={36} />
             <span className="font-fredoka text-xl text-gray-700">Sound Effects</span>
           </div>
           <button
@@ -108,7 +109,7 @@ export default function SettingsScreen() {
           transition={{ delay: 0.2 }}
         >
           <div className="flex items-center gap-3">
-            <span className="text-3xl">{state.settings.musicEnabled ? '🎵' : '🎵'}</span>
+            <PixelIcon name="musicNote" size={36} />
             <span className="font-fredoka text-xl text-gray-700">Music</span>
           </div>
           <button
@@ -138,7 +139,7 @@ export default function SettingsScreen() {
           </p>
           <div className="flex justify-center">
             <button
-              className="relative px-6 py-3 bg-red-100 text-red-600 font-fredoka font-semibold rounded-xl cursor-pointer overflow-hidden select-none"
+              className="relative px-6 py-3 bg-red-100 text-red-600 font-fredoka font-semibold rounded-xl cursor-pointer overflow-hidden select-none flex items-center gap-2"
               onMouseDown={startHold}
               onMouseUp={endHold}
               onMouseLeave={endHold}
@@ -150,7 +151,9 @@ export default function SettingsScreen() {
                 className="absolute inset-0 bg-red-300/50 transition-all"
                 style={{ width: `${holdProgress * 100}%` }}
               />
-              <span className="relative">🔄 Reset All Progress</span>
+              <span className="relative flex items-center gap-2">
+                <PixelIcon name="retry" size={20} /> Reset All Progress
+              </span>
             </button>
           </div>
         </motion.div>

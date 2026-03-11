@@ -4,6 +4,7 @@ import { WORLDS, LEVELS_PER_WORLD } from '../data/worlds';
 import { useGame } from '../context/GameContext';
 import Button from '../components/Button';
 import Medal from '../components/Medal';
+import PixelIcon from '../components/PixelIcons';
 
 export default function TrophyRoomScreen() {
   const navigate = useNavigate();
@@ -22,19 +23,19 @@ export default function TrophyRoomScreen() {
         <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="!text-amber-800">
           ← Back
         </Button>
-        <h2 className="font-bubblegum text-4xl text-amber-800 drop-shadow">
-          🏆 Trophy Room
+        <h2 className="font-bubblegum text-4xl text-amber-800 drop-shadow flex items-center gap-2">
+          <PixelIcon name="trophy" size={36} /> Trophy Room
         </h2>
         <div className="w-20" />
       </motion.div>
 
       {/* Total points */}
       <motion.div
-        className="relative z-10 mt-4 font-fredoka text-xl text-amber-700"
+        className="relative z-10 mt-4 font-fredoka text-xl text-amber-700 flex items-center gap-2"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       >
-        ⭐ Total Points: {state.totalPoints}
+        <PixelIcon name="star" size={24} /> Total Points: {state.totalPoints}
       </motion.div>
 
       {/* Trophies grid */}
@@ -49,7 +50,7 @@ export default function TrophyRoomScreen() {
           >
             {/* World header */}
             <div className="flex items-center gap-3 mb-4">
-              <span className="text-3xl">{world.icon}</span>
+              <PixelIcon name={world.icon} size={36} />
               <h3
                 className="font-fredoka text-xl font-semibold"
                 style={{ color: world.colors.primary }}
@@ -57,15 +58,17 @@ export default function TrophyRoomScreen() {
                 {world.name}
               </h3>
               {state.trophies.includes(world.id) ? (
-                <motion.span
-                  className="text-3xl ml-auto"
+                <motion.div
+                  className="ml-auto"
                   animate={{ rotate: [0, 10, -10, 0] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
-                  🏆
-                </motion.span>
+                  <PixelIcon name="trophy" size={36} />
+                </motion.div>
               ) : (
-                <span className="text-3xl ml-auto opacity-20">🏆</span>
+                <div className="ml-auto opacity-20">
+                  <PixelIcon name="trophy" size={36} />
+                </div>
               )}
             </div>
 

@@ -1,7 +1,8 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import PixelIcon from './PixelIcons';
 
-// Particle-based confetti/star burst animation
+// Pixel art confetti/star burst animation
 export default function Confetti({ active, type = 'stars' }) {
   const [particles, setParticles] = useState([]);
 
@@ -12,13 +13,13 @@ export default function Confetti({ active, type = 'stars' }) {
     }
 
     const items = type === 'confetti' ? 30 : 12;
-    const emojis = type === 'confetti'
-      ? ['🎉', '🎊', '✨', '⭐', '🌟', '💫']
-      : ['⭐', '✨', '🌟'];
+    const icons = type === 'confetti'
+      ? ['partyPopper', 'confettiSquare', 'sparkle', 'star', 'confettiCircle', 'confettiDiamond']
+      : ['star', 'sparkle', 'star'];
 
     const newParticles = Array.from({ length: items }, (_, i) => ({
       id: i,
-      emoji: emojis[i % emojis.length],
+      icon: icons[i % icons.length],
       x: Math.random() * 100 - 50,
       y: -(Math.random() * 200 + 50),
       rotate: Math.random() * 360,
@@ -53,9 +54,8 @@ export default function Confetti({ active, type = 'stars' }) {
               delay: p.delay,
               ease: 'easeOut',
             }}
-            style={{ fontSize: 24 + p.scale * 12 }}
           >
-            {p.emoji}
+            <PixelIcon name={p.icon} size={Math.round(24 + p.scale * 12)} />
           </motion.div>
         ))}
       </AnimatePresence>
