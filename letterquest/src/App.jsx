@@ -12,7 +12,7 @@ import SettingsScreen from './screens/SettingsScreen';
 function App() {
   return (
     <GameProvider>
-      <BrowserRouter>
+      <BrowserRouter basename="/Games">
         <div className="h-screen w-screen overflow-hidden bg-gray-100">
           <AnimatePresence mode="wait">
             <Routes>
