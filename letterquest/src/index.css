@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+@theme {
+  --font-fredoka: 'Fredoka', sans-serif;
+  --font-bubblegum: 'Bubblegum Sans', cursive;
+
+  --color-forest-100: #e8f5e9;
+  --color-forest-200: #a5d6a7;
+  --color-forest-300: #66bb6a;
+  --color-forest-400: #43a047;
+  --color-forest-500: #2e7d32;
+
+  --color-ocean-100: #e0f7fa;
+  --color-ocean-200: #80deea;
+  --color-ocean-300: #26c6da;
+  --color-ocean-400: #0097a7;
+  --color-ocean-500: #006064;
+
+  --color-space-100: #f3e5f5;
+  --color-space-200: #ce93d8;
+  --color-space-300: #ab47bc;
+  --color-space-400: #8e24aa;
+  --color-space-500: #6a1b9a;
+
+  --color-dino-100: #fff3e0;
+  --color-dino-200: #ffcc80;
+  --color-dino-300: #ffa726;
+  --color-dino-400: #f57c00;
+  --color-dino-500: #e65100;
+
+  --color-rainbow-100: #fce4ec;
+  --color-rainbow-200: #f48fb1;
+  --color-rainbow-300: #ec407a;
+  --color-rainbow-400: #d81b60;
+  --color-rainbow-500: #ad1457;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Fredoka', sans-serif;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+#root {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
